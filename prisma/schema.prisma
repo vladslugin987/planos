@@ -39,21 +39,23 @@ model Session {
 }
 
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String?       @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  settings      UserSettings?
-  events        Event[]
-  notes         Note[]
-  tasks         Task[]
-  transactions  Transaction[]
-  categories    Category[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String?                @unique
+  emailVerified         DateTime?
+  image                 String?
+  accounts              Account[]
+  sessions              Session[]
+  settings              UserSettings?
+  events                Event[]
+  notes                 Note[]
+  tasks                 Task[]
+  transactions          Transaction[]
+  categories            Category[]
+  budgets               Budget[]
+  recurringTransactions RecurringTransaction[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model VerificationToken {
@@ -133,8 +135,10 @@ model Category {
   type      String // task, transaction, both
   isDefault Boolean @default(false)
 
-  tasks        Task[]
-  transactions Transaction[]
+  tasks                 Task[]
+  transactions          Transaction[]
+  budgets               Budget[]
+  recurringTransactions RecurringTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -190,6 +194,53 @@ model Transaction {
 
   description String?
   date        DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Budgets for categories
+model Budget {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  amount    Float
+  period    String    @default("monthly") // monthly, yearly
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, categoryId, period])
+}
+
+// Recurring Transactions (subscriptions, rent, salary)
+model RecurringTransaction {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type     String // income, expense
+  amount   Float
+  currency String @default("USD")
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  description String?
+  frequency   String // daily, weekly, monthly, yearly
+  dayOfMonth  Int? // for monthly (1-31)
+  dayOfWeek   Int? // for weekly (0-6)
+  startDate   DateTime  @default(now())
+  endDate     DateTime?
+  nextDate    DateTime
+
+  active Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

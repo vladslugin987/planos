@@ -97,8 +97,8 @@ export default function FinancePage() {
     const currentMonth = now.getMonth()
     const currentYear = now.getFullYear()
 
-    let filtered = transactions.filter(t => {
-      const date = new Date(t.date)
+    let filtered = transactions.filter(tx => {
+      const date = new Date(tx.date)
       if (filter === 'thisMonth') {
         return date.getMonth() === currentMonth && date.getFullYear() === currentYear
       }
@@ -110,16 +110,16 @@ export default function FinancePage() {
 
     // Filter by category
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(t => t.categoryId === selectedCategory)
+      filtered = filtered.filter(tx => tx.categoryId === selectedCategory)
     }
 
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(t => 
-        t.description?.toLowerCase().includes(query) ||
-        t.category?.name.toLowerCase().includes(query) ||
-        t.amount.toString().includes(query)
+      filtered = filtered.filter(tx => 
+        tx.description?.toLowerCase().includes(query) ||
+        tx.category?.name.toLowerCase().includes(query) ||
+        tx.amount.toString().includes(query)
       )
     }
 
@@ -128,8 +128,8 @@ export default function FinancePage() {
 
   const calculateStats = (): Stats => {
     const filtered = getFilteredTransactions()
-    const income = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
-    const expense = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+    const income = filtered.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0)
+    const expense = filtered.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0)
     return {
       totalIncome: income,
       totalExpense: expense,
@@ -139,19 +139,19 @@ export default function FinancePage() {
 
   // Chart data preparation
   const expenseChartData = useMemo(() => {
-    const filtered = getFilteredTransactions().filter(t => t.type === 'expense')
+    const filtered = getFilteredTransactions().filter(tx => tx.type === 'expense')
     const categoryMap = new Map<string, { name: string; value: number; color: string }>()
 
-    filtered.forEach(t => {
-      const categoryName = t.category?.name || t.finance.noCategory
-      const color = t.category?.color || '#6b7280'
+    filtered.forEach(tx => {
+      const categoryName = tx.category?.name || 'Uncategorized'
+      const color = tx.category?.color || '#6b7280'
       
       if (categoryMap.has(categoryName)) {
-        categoryMap.get(categoryName)!.value += t.amount
+        categoryMap.get(categoryName)!.value += tx.amount
       } else {
         categoryMap.set(categoryName, {
           name: (t.finance.categories as any)[categoryName] || categoryName,
-          value: t.amount,
+          value: tx.amount,
           color
         })
       }
@@ -169,15 +169,15 @@ export default function FinancePage() {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthName = date.toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US', { month: 'short' })
       
-      const monthTransactions = transactions.filter(t => {
-        const tDate = new Date(t.date)
+      const monthTransactions = transactions.filter(tx => {
+        const tDate = new Date(tx.date)
         return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === date.getFullYear()
       })
 
       months.push({
         month: monthName,
-        income: monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
-        expense: monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+        income: monthTransactions.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0),
+        expense: monthTransactions.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0)
       })
     }
 
