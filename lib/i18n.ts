@@ -116,6 +116,9 @@ export const translations = {
     },
     // GitHub Integration (for optional GitHub features)
     homework: {
+      yourRepos: 'Твои репозитории',
+      loadingRepos: 'Загрузка репозиториев...',
+      updated: 'Обновлено:',
       back: '← Назад',
       edit: 'Редактировать',
       cancel: 'Отмена',
@@ -284,6 +287,9 @@ export const translations = {
     },
     // GitHub Integration (for optional GitHub features)
     homework: {
+      yourRepos: 'Your Repositories',
+      loadingRepos: 'Loading repositories...',
+      updated: 'Updated:',
       back: '← Back',
       edit: 'Edit',
       cancel: 'Cancel',
