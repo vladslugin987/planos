@@ -1,51 +1,51 @@
 # Planos
 
-Планировщик с AI-чатом и заметками. Сделал для себя, может кому-то пригодится.
+A planner with AI chat and notes. Made it for myself, maybe someone will find it useful.
 
-## Что умеет
+## Features
 
-- Календарь на неделю где можно перетаскивать события
-- AI помощник (нужен OpenAI ключ)
-- Стикеры-заметки
-- Авторизация через GitHub или Google
-- Все синхронизируется между устройствами
+- Weekly calendar with drag & drop events
+- AI assistant (needs OpenAI key)
+- Sticky notes
+- Auth via GitHub or Google
+- Everything syncs between devices
 
-## Установка
+## Setup
 
 ```bash
 npm install
 ```
 
-Создай `.env.local`:
+Create `.env.local`:
 
 ```env
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="сюда-любую-случайную-строку"
+NEXTAUTH_SECRET="any-random-string-here"
 
 # GitHub OAuth
-GITHUB_CLIENT_ID="твой-id"
-GITHUB_CLIENT_SECRET="твой-секрет"
+GITHUB_CLIENT_ID="your-id"
+GITHUB_CLIENT_SECRET="your-secret"
 
-# Google OAuth (опционально)
+# Google OAuth (optional)
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 ```
 
-GitHub OAuth получить тут: https://github.com/settings/developers
+Get GitHub OAuth here: https://github.com/settings/developers
 
 ```bash
 npm run dev
 ```
 
-## Деплой
+## Deploy
 
-Работает на Vercel. Просто залей на GitHub и подключи к Vercel.
+Works on Vercel. Just push to GitHub and connect to Vercel.
 
-## Автор
+## Author
 
 Vladislav Slugin
 
-## Лицензия
+## License
 
 MIT
