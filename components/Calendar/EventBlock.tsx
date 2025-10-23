@@ -59,7 +59,7 @@ export default function EventBlock({ event, onEdit, onDelete, topPosition, event
           <button
             onClick={(e) => {
               e.stopPropagation()
-              if (onDelete && confirm('Удалить событие?')) {
+              if (onDelete && confirm('Delete event?')) {
                 onDelete()
               }
             }}
