@@ -1,12 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
     const { message, weekOffset, apiKey, existingEvents } = await req.json()
     
-    // Use user's API key if provided, otherwise fall back to env variable
-    const effectiveApiKey = apiKey || process.env.OPENAI_API_KEY || ''
+    // Try to get API key from: 1) request body, 2) user settings, 3) env variable
+    let effectiveApiKey = apiKey || process.env.OPENAI_API_KEY || ''
+    
+    // If no API key in request, try to get from user settings
+    if (!effectiveApiKey) {
+      const session = await getServerSession(authOptions)
+      if (session?.user?.id) {
+        const settings = await prisma.userSettings.findUnique({
+          where: { userId: session.user.id },
+          select: { openaiApiKey: true }
+        })
+        effectiveApiKey = settings?.openaiApiKey || ''
+      }
+    }
     
     if (!effectiveApiKey) {
       return NextResponse.json({ 
