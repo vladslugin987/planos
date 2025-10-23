@@ -17,7 +17,9 @@ type Props = {
     description?: string
     day: number
     startTime: number
+    startMinute?: number
     endTime: number
+    endMinute?: number
     color?: string
   }
 }
