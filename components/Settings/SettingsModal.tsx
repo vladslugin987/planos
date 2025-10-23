@@ -247,8 +247,8 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
 
                     <div className="text-[10px] md:text-xs text-gray-500">
                       {language === 'ru' 
-                        ? 'Эти данные нужны для загрузки домашки на GitHub. Хранятся локально в браузере.' 
-                        : 'These credentials are needed to upload homework to GitHub. Stored locally in browser.'}
+                        ? 'Эти данные для доступа к GitHub репозиториям. Хранятся локально в браузере.' 
+                        : 'These credentials are for accessing GitHub repositories. Stored locally in browser.'}
                     </div>
                   </div>
                 </div>

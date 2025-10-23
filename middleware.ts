@@ -5,7 +5,8 @@ export const config = {
     '/',
     '/year',
     '/notes',
-    '/homework',
+    '/tasks',
+    '/finance',
     '/api/user/:path*',
   ]
 }
