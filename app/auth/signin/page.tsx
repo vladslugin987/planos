@@ -100,22 +100,18 @@ function SignInContent() {
           <p className="mb-4">После входа вам будет доступно:</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3">
-              <div className="text-2xl mb-1">📅</div>
               <div className="font-medium text-gray-900">Календарь</div>
               <div className="text-xs text-gray-500">с AI-помощником</div>
             </div>
             <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3">
-              <div className="text-2xl mb-1">📝</div>
               <div className="font-medium text-gray-900">Заметки</div>
               <div className="text-xs text-gray-500">со стикерами</div>
             </div>
             <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3">
-              <div className="text-2xl mb-1">🐙</div>
               <div className="font-medium text-gray-900">GitHub</div>
               <div className="text-xs text-gray-500">интеграция</div>
             </div>
             <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3">
-              <div className="text-2xl mb-1">☁️</div>
               <div className="font-medium text-gray-900">Синхронизация</div>
               <div className="text-xs text-gray-500">между устройствами</div>
             </div>
