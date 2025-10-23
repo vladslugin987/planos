@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ExpensePieChart from '@/components/Finance/ExpensePieChart'
 import TrendLineChart from '@/components/Finance/TrendLineChart'
 import BalanceBarChart from '@/components/Finance/BalanceBarChart'
+import BudgetManager from '@/components/Finance/BudgetManager'
+import RecurringManager from '@/components/Finance/RecurringManager'
 
 type Transaction = {
   id: string
@@ -250,6 +252,20 @@ export default function FinancePage() {
           <h3 className="text-lg font-semibold mb-4">{t.finance.charts.monthlyBalance}</h3>
           <BalanceBarChart data={balanceChartData} language={language} />
         </div>
+      </div>
+
+      {/* Budget & Recurring */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <BudgetManager 
+          transactions={transactions} 
+          categories={categories}
+          onUpdate={loadData}
+        />
+        
+        <RecurringManager 
+          categories={categories}
+          onUpdate={loadData}
+        />
       </div>
 
       {/* Filters */}
