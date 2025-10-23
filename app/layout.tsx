@@ -50,6 +50,9 @@ export default function RootLayout({
                 <Link href="/finance" className="text-gray-700 hover:text-gray-900 transition">
                   {t.nav.finance}
                 </Link>
+                <Link href="/investments" className="text-gray-700 hover:text-gray-900 transition">
+                  {t.nav.investments}
+                </Link>
                 
                 {/* Settings Button */}
                 <button
@@ -137,6 +140,13 @@ export default function RootLayout({
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t.nav.finance}
+              </Link>
+              <Link 
+                href="/investments" 
+                className="block py-2 text-gray-700 hover:text-gray-900 transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t.nav.investments}
               </Link>
               
               <div className="pt-2 border-t border-gray-200 space-y-2">

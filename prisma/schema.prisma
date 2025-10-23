@@ -54,6 +54,8 @@ model User {
   categories            Category[]
   budgets               Budget[]
   recurringTransactions RecurringTransaction[]
+  assets                Asset[]
+  holdings              Holding[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -241,6 +243,45 @@ model RecurringTransaction {
   nextDate    DateTime
 
   active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Investment Assets (Crypto, Stocks, etc.)
+model Asset {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   String // crypto, stock, bond, real_estate, commodity, other
+  symbol String // BTC, ETH, AAPL, TSLA, etc.
+  name   String // Bitcoin, Apple Inc., etc.
+
+  holdings Holding[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
+}
+
+// Holdings (specific purchases of assets)
+model Holding {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  quantity      Float // amount of units purchased
+  purchasePrice Float // price per unit at purchase time
+  purchaseDate  DateTime @default(now())
+
+  currentPrice Float?    @default(0) // current price per unit (updated via API)
+  lastUpdated  DateTime?
+
+  notes String? // optional notes about this purchase
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

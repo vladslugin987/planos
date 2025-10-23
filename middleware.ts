@@ -7,6 +7,7 @@ export const config = {
     '/notes',
     '/tasks',
     '/finance',
+    '/investments',
     '/api/user/:path*',
   ]
 }
