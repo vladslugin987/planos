@@ -2,6 +2,8 @@
 
 A planner with AI chat and notes. Made it for myself, maybe someone will find it useful.
 
+**Live Demo: https://planos-blond.vercel.app**
+
 ## Features
 
 - Weekly calendar with drag & drop events
