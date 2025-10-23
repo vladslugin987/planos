@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useStore } from '@/lib/store'
 import { useTranslation } from '@/lib/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
+import ExpensePieChart from '@/components/Finance/ExpensePieChart'
+import TrendLineChart from '@/components/Finance/TrendLineChart'
+import BalanceBarChart from '@/components/Finance/BalanceBarChart'
 
 type Transaction = {
   id: string
@@ -13,8 +16,18 @@ type Transaction = {
   currency: string
   description?: string
   categoryId?: string
+  category?: Category
   date: string
   createdAt: string
+}
+
+type Category = {
+  id: string
+  name: string
+  color: string
+  icon?: string
+  type: string
+  isDefault: boolean
 }
 
 type Stats = {
@@ -28,13 +41,17 @@ export default function FinancePage() {
   const { language } = useStore()
   const t = useTranslation(language)
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [filter, setFilter] = useState<'all' | 'thisMonth' | 'thisYear'>('thisMonth')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
 
   useEffect(() => {
     if (session) {
       loadTransactions()
+      loadCategories()
     }
   }, [session])
 
@@ -47,6 +64,18 @@ export default function FinancePage() {
       }
     } catch (err) {
       console.error('Failed to load transactions:', err)
+    }
+  }
+
+  const loadCategories = async () => {
+    try {
+      const res = await fetch('/api/user/categories?type=transaction')
+      if (res.ok) {
+        const data = await res.json()
+        setCategories(data)
+      }
+    } catch (err) {
+      console.error('Failed to load categories:', err)
     }
   }
 
@@ -68,7 +97,7 @@ export default function FinancePage() {
     const currentMonth = now.getMonth()
     const currentYear = now.getFullYear()
 
-    return transactions.filter(t => {
+    let filtered = transactions.filter(t => {
       const date = new Date(t.date)
       if (filter === 'thisMonth') {
         return date.getMonth() === currentMonth && date.getFullYear() === currentYear
@@ -78,6 +107,23 @@ export default function FinancePage() {
       }
       return true
     })
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(t => t.categoryId === selectedCategory)
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(t => 
+        t.description?.toLowerCase().includes(query) ||
+        t.category?.name.toLowerCase().includes(query) ||
+        t.amount.toString().includes(query)
+      )
+    }
+
+    return filtered
   }
 
   const calculateStats = (): Stats => {
@@ -90,6 +136,60 @@ export default function FinancePage() {
       balance: income - expense
     }
   }
+
+  // Chart data preparation
+  const expenseChartData = useMemo(() => {
+    const filtered = getFilteredTransactions().filter(t => t.type === 'expense')
+    const categoryMap = new Map<string, { name: string; value: number; color: string }>()
+
+    filtered.forEach(t => {
+      const categoryName = t.category?.name || t.finance.noCategory
+      const color = t.category?.color || '#6b7280'
+      
+      if (categoryMap.has(categoryName)) {
+        categoryMap.get(categoryName)!.value += t.amount
+      } else {
+        categoryMap.set(categoryName, {
+          name: (t.finance.categories as any)[categoryName] || categoryName,
+          value: t.amount,
+          color
+        })
+      }
+    })
+
+    return Array.from(categoryMap.values())
+  }, [transactions, filter, selectedCategory, searchQuery, language])
+
+  const trendChartData = useMemo(() => {
+    const now = new Date()
+    const months: { month: string; income: number; expense: number }[] = []
+    
+    // Get last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthName = date.toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US', { month: 'short' })
+      
+      const monthTransactions = transactions.filter(t => {
+        const tDate = new Date(t.date)
+        return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === date.getFullYear()
+      })
+
+      months.push({
+        month: monthName,
+        income: monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
+        expense: monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+      })
+    }
+
+    return months
+  }, [transactions, language])
+
+  const balanceChartData = useMemo(() => {
+    return trendChartData.map(d => ({
+      month: d.month,
+      balance: d.income - d.expense
+    }))
+  }, [trendChartData])
 
   const stats = calculateStats()
   const filteredTransactions = getFilteredTransactions()
@@ -110,6 +210,7 @@ export default function FinancePage() {
         </button>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-sm text-gray-600 mb-1">{t.finance.stats.totalIncome}</div>
@@ -133,39 +234,84 @@ export default function FinancePage() {
         </div>
       </div>
 
-      <div className="mb-4 flex gap-2">
-        <button
-          onClick={() => setFilter('thisMonth')}
-          className={`px-4 py-2 text-sm rounded transition ${
-            filter === 'thisMonth'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          {t.finance.thisMonth}
-        </button>
-        <button
-          onClick={() => setFilter('thisYear')}
-          className={`px-4 py-2 text-sm rounded transition ${
-            filter === 'thisYear'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          {t.finance.thisYear}
-        </button>
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 text-sm rounded transition ${
-            filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          {t.finance.allTime}
-        </button>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-4">{t.finance.charts.expensesByCategory}</h3>
+          <ExpensePieChart data={expenseChartData} />
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-4">{t.finance.charts.incomeTrend}</h3>
+          <TrendLineChart data={trendChartData} language={language} />
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg p-4 lg:col-span-2">
+          <h3 className="text-lg font-semibold mb-4">{t.finance.charts.monthlyBalance}</h3>
+          <BalanceBarChart data={balanceChartData} language={language} />
+        </div>
       </div>
 
+      {/* Filters */}
+      <div className="mb-4 space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilter('thisMonth')}
+            className={`px-4 py-2 text-sm rounded transition ${
+              filter === 'thisMonth'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {t.finance.thisMonth}
+          </button>
+          <button
+            onClick={() => setFilter('thisYear')}
+            className={`px-4 py-2 text-sm rounded transition ${
+              filter === 'thisYear'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {t.finance.thisYear}
+          </button>
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 text-sm rounded transition ${
+              filter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {t.finance.allTime}
+          </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t.finance.searchPlaceholder}
+            className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-4 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">{t.finance.all}</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>
+                {(t.finance.categories as any)[cat.name] || cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Transactions Table */}
       {filteredTransactions.length === 0 ? (
         <div className="text-center py-12 text-gray-400 bg-white rounded-lg border border-gray-200">
           {t.finance.noTransactions}
@@ -177,7 +323,7 @@ export default function FinancePage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t.finance.date}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t.finance.type}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t.finance.category}</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t.finance.description}</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t.finance.amount}</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -195,13 +341,19 @@ export default function FinancePage() {
                       {new Date(transaction.date).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                        transaction.type === 'income' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {transaction.type === 'income' ? t.finance.income : t.finance.expense}
-                      </span>
+                      {transaction.category ? (
+                        <span 
+                          className="inline-flex px-2 py-1 text-xs font-medium rounded"
+                          style={{ 
+                            backgroundColor: transaction.category.color + '20',
+                            color: transaction.category.color
+                          }}
+                        >
+                          {(t.finance.categories as any)[transaction.category.name] || transaction.category.name}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">{t.finance.noCategory}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {transaction.description || '-'}
@@ -243,16 +395,18 @@ export default function FinancePage() {
           setEditingTransaction(null)
         }}
         transaction={editingTransaction}
+        categories={categories}
         onSave={loadTransactions}
       />
     </div>
   )
 }
 
-function TransactionModal({ isOpen, onClose, transaction, onSave }: {
+function TransactionModal({ isOpen, onClose, transaction, categories, onSave }: {
   isOpen: boolean
   onClose: () => void
   transaction: Transaction | null
+  categories: Category[]
   onSave: () => void
 }) {
   const { language } = useStore()
@@ -260,6 +414,7 @@ function TransactionModal({ isOpen, onClose, transaction, onSave }: {
   const [type, setType] = useState<'income' | 'expense'>('expense')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
+  const [categoryId, setCategoryId] = useState('')
   const [date, setDate] = useState('')
 
   useEffect(() => {
@@ -267,11 +422,13 @@ function TransactionModal({ isOpen, onClose, transaction, onSave }: {
       setType(transaction.type)
       setAmount(transaction.amount.toString())
       setDescription(transaction.description || '')
+      setCategoryId(transaction.categoryId || '')
       setDate(transaction.date.split('T')[0])
     } else {
       setType('expense')
       setAmount('')
       setDescription('')
+      setCategoryId('')
       setDate(new Date().toISOString().split('T')[0])
     }
   }, [transaction, isOpen])
@@ -282,8 +439,8 @@ function TransactionModal({ isOpen, onClose, transaction, onSave }: {
     try {
       const method = transaction ? 'PUT' : 'POST'
       const body = transaction 
-        ? { id: transaction.id, type, amount: parseFloat(amount), description, date }
-        : { type, amount: parseFloat(amount), description, date }
+        ? { id: transaction.id, type, amount: parseFloat(amount), description, categoryId: categoryId || null, date }
+        : { type, amount: parseFloat(amount), description, categoryId: categoryId || null, date }
 
       const res = await fetch('/api/user/transactions', {
         method,
@@ -357,6 +514,24 @@ function TransactionModal({ isOpen, onClose, transaction, onSave }: {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t.finance.category}
+                  </label>
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">{t.finance.noCategory}</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {(t.finance.categories as any)[cat.name] || cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     {t.finance.amount}
                   </label>
                   <input
@@ -417,4 +592,3 @@ function TransactionModal({ isOpen, onClose, transaction, onSave }: {
     </AnimatePresence>
   )
 }
-
