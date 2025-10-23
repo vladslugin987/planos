@@ -1,17 +1,20 @@
 # Planos
 
-A planner with AI chat and notes. Made it for myself, maybe someone will find it useful.
+A comprehensive productivity and finance management app with AI assistance. Plan your days, track tasks with checklists, manage finances, and take notes - all in one place.
 
 **Live Demo: https://planos-blond.vercel.app**
 
 ## Features
 
-- Weekly calendar with drag & drop events
-- AI assistant (needs OpenAI key)
-- Sticky notes
-- Auth via GitHub or Google
-- GitHub integration for homework management
-- Everything syncs between devices
+- **Weekly Calendar** - Drag and drop events with minute precision
+- **Task Management** - Create tasks with checklists, priorities, and due dates
+- **Finance Tracker** - Track income and expenses by day, month, and year
+- **Sticky Notes** - Draggable notes for quick thoughts
+- **AI Assistant** - Smart scheduling with OpenAI integration
+- **Year View** - See your events across the entire year
+- **Multi-language** - Full support for English and Russian
+- **Responsive Design** - Works on desktop and mobile
+- **Data Sync** - Everything syncs between your devices
 
 ## Setup
 
@@ -36,13 +39,6 @@ GOOGLE_CLIENT_SECRET=""
 ```
 
 Get GitHub OAuth here: https://github.com/settings/developers
-
-**Important for Homework section:**
-When creating your GitHub OAuth App, set the callback URL to:
-- `http://localhost:3000/api/auth/callback/github` (for local development)
-- `https://your-domain.com/api/auth/callback/github` (for production)
-
-The app will automatically request `repo` scope to access your repositories.
 
 ```bash
 npx prisma generate
