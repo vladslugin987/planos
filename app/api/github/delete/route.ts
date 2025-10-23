@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { Octokit } from '@octokit/rest'
 
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get('gh_token')?.value
+  const session = await getServerSession(authOptions)
   
-  if (!token) {
+  if (!session?.accessToken) {
     return NextResponse.json({ error: 'not authenticated' }, { status: 401 })
   }
 
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'sha is required for deletion' }, { status: 400 })
     }
 
-    const octokit = new Octokit({ auth: token })
+    const octokit = new Octokit({ auth: session.accessToken })
 
     const { data } = await octokit.repos.deleteFile({
       owner,

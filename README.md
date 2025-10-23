@@ -10,6 +10,7 @@ A planner with AI chat and notes. Made it for myself, maybe someone will find it
 - AI assistant (needs OpenAI key)
 - Sticky notes
 - Auth via GitHub or Google
+- GitHub integration for homework management
 - Everything syncs between devices
 
 ## Setup
@@ -36,7 +37,16 @@ GOOGLE_CLIENT_SECRET=""
 
 Get GitHub OAuth here: https://github.com/settings/developers
 
+**Important for Homework section:**
+When creating your GitHub OAuth App, set the callback URL to:
+- `http://localhost:3000/api/auth/callback/github` (for local development)
+- `https://your-domain.com/api/auth/callback/github` (for production)
+
+The app will automatically request `repo` scope to access your repositories.
+
 ```bash
+npx prisma generate
+npx prisma migrate dev
 npm run dev
 ```
 
