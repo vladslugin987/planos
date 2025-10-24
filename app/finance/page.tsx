@@ -81,6 +81,11 @@ export default function FinancePage() {
     }
   }
 
+  const loadData = () => {
+    loadTransactions()
+    loadCategories()
+  }
+
   const deleteTransaction = async (id: string) => {
     if (!confirm(t.finance.confirmDelete)) return
     
